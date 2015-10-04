@@ -115,8 +115,15 @@ class Renderer :
 		settings.append( section.Paper.Width,  paper_width_code  )
 		settings.append( section.Paper.Height, paper_height_code )
 
-		if section.Landscape :
-			settings.append( landscape )
+		if section.Landscape:
+			# Landscape mode: swap height and width.
+			settings.append(section.Paper.Height, paper_width_code)
+			settings.append(section.Paper.Width, paper_height_code)
+			settings.append(landscape)
+		else:
+			# Not landscape mode.
+			settings.append(section.Paper.Width, paper_width_code)
+			settings.append(section.Paper.Height, paper_height_code)
 
 		if section.FirstPageNumber :
 			settings.append( section.FirstPageNumber, 'pgnstarts%s' )
