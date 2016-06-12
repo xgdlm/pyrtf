@@ -115,8 +115,15 @@ class Renderer :
 		settings.append( section.Paper.Width,  paper_width_code  )
 		settings.append( section.Paper.Height, paper_height_code )
 
-		if section.Landscape :
-			settings.append( landscape )
+		if section.Landscape:
+			# Landscape mode: swap height and width.
+			settings.append(section.Paper.Height, paper_width_code)
+			settings.append(section.Paper.Width, paper_height_code)
+			settings.append(landscape)
+		else:
+			# Not landscape mode.
+			settings.append(section.Paper.Width, paper_width_code)
+			settings.append(section.Paper.Height, paper_height_code)
 
 		if section.FirstPageNumber :
 			settings.append( section.FirstPageNumber, 'pgnstarts%s' )
@@ -254,6 +261,14 @@ class Renderer :
 
 		del self._fout, self._doc, self._CurrentStyle
 
+		
+	def __rtf_encode_char(self, unichar):
+	    code = ord(unichar)
+	    if code < 128:
+	    	return str(unichar)
+	    return '\\u' + str(code if code <= 32767 else code - 65536) + '?'
+
+
 	def _write( self, data, *params ) :
 		#----------------------------------
 		# begin modification
@@ -275,6 +290,7 @@ class Renderer :
 		#----------------------------------
 
 		if params : data = data % params
+		data = ''.join(self.__rtf_encode_char(c) for c in data)
 		self._fout.write( data )
 
 	def _WriteDocument( self ) :
@@ -438,7 +454,7 @@ class Renderer :
 			elif clss == Table :
 				self.WriteTableElement( element )
 
-			elif clss == StringType :
+			elif clss == StringType  or clss == unicode:
 				self.WriteParagraphElement( Paragraph( element ) )
 
 			elif clss in [ RawCode, Image ] :
@@ -473,8 +489,7 @@ class Renderer :
 		self._write( r'%s\pard\plain%s %s%s ' % ( opening, tag_prefix, self._CurrentStyle, overrides ) )
 
 		for element in paragraph_elem :
-
-			if isinstance( element, StringType ) :
+			if isinstance( element, StringType ) or isinstance( element, unicode )  or isinstance( element, str ):
 				self._write( element )
 
 			elif isinstance( element, RawCode ) :
