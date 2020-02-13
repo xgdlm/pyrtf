@@ -371,10 +371,34 @@ class Image( RawCode ) :
 			width, height = _get_png_dimensions( fin.read( 100 ) )
 		else :
 			width, height = _get_jpg_dimensions( fin )
+		
+		w = kwargs.pop('width', -1)
+		h = kwargs.pop('height', -1)
+		if w > 0 :
+			if h > 0 :
+				# If both are set, just use them.
+				width = w
+				height = h
+			else :
+				# Calculate height from width, maintaining aspect ratio.
+				height = float(w * height) / width
+				width = w
+		elif h > 0 :
+			# Calculate width from height, maintaining aspect ratio.
+			width = float(h * width) / height
+			height = h
+		else:
+			# If neither is set, use the default image sizing.
+			# 1 pixel = 1 point (1/72 inch, or 20 twips)
+			width *= 20
+			height *= 20
 
+        # Ensure that the output values are integers.
+		width = int(width)
+		height = int(height)
 		codes = [ pict_type,
-				  'picwgoal%s' % (width  * 20),
-				  'pichgoal%s' % (height * 20) ]
+				  'picwgoal%s' % width,
+				  'pichgoal%s' % height ]
 		for kwarg, code, default in [ ( 'scale_x',     'scalex', '100' ),
 									  ( 'scale_y',     'scaley', '100' ),
 									  ( 'crop_left',   'cropl',    '0' ),
